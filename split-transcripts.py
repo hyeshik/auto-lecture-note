@@ -3,7 +3,6 @@ import webvtt
 import re
 import pandas as pd
 
-# Putting it altogether into a function
 pat_vtttime = re.compile(r'<\d\d:\d\d:\d\d\.\d\d\d>')
 
 def strip_c(txt):
@@ -81,8 +80,8 @@ def load_scenic_transcripts(vttfile, scenefile, min_scene_length=5):
 def diffuse_boundary(transcripts, max_diffusion=5):
     transcripts = transcripts.copy()
 
-    tails = transcripts['transcript'].apply(lambda x: ' '.join(x.split()[-5:]))
-    heads = transcripts['transcript'].apply(lambda x: ' '.join(x.split()[:5]))
+    tails = transcripts['transcript'].apply(lambda x: ' '.join(x.split()[-max_diffusion:]))
+    heads = transcripts['transcript'].apply(lambda x: ' '.join(x.split()[:max_diffusion]))
 
     prefixes = pd.Series([''] + list(tails[:-1]))
     suffixes = pd.Series(list(heads[1:]) + [''])

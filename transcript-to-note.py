@@ -5,18 +5,18 @@ from collections import deque
 import json
 import sys
 
-openai.api_key = open(os.environ['HOME'] + '/.openai-api').read().strip()
+openai.api_key_path = os.environ['HOME'] + '/.openai-api'
 
 system_instruction = """\
 You are a university lecturer teaching virology for biology majors. Based on \
 the transcript provided by user, you will prepare lecture notes for the part. \
 The lecture note should start with a brief title in a single sentence. \
 The body must be prepared in multiple bullet points. The answer should be \
-in Korean. In the body, the scientific terms \
-should be used in Korean with the English term in parenthesis. The body should \
-not miss any important points from the transcript. The body should be concise \
-and easy to understand. The answer must be formatted in Markdown. Use the first level \
-heading for the title and the body should be in bullet points under the title. \
+in Korean. In the body, the scientific terms should be used in Korean with \
+the English term in parenthesis. The body should not miss any important points \
+from the transcript. The body should be concise and easy to understand. The \
+answer must be formatted in Markdown. Use the first level heading for the \
+title and the body should be in bullet points under the title. \
 """
 
 transcript_file = sys.argv[1]
@@ -32,9 +32,10 @@ context = deque()
 for scene_no, row in transcripts.iterrows():
     scene_no += 1 # make it 1-based
     output_prefix = f'{output_dir}/{scene_no:04d}'
+    context_file = output_prefix + '-context.json'
 
-    if os.path.isfile(output_prefix + '-context.json'):
-        context = deque(json.load(open(output_prefix + '-context.json')))
+    if os.path.isfile(context_file):
+        context = deque(json.load(open(context_file)))
         print(f'==> Skipping scene {scene_no}')
         continue
 
@@ -47,7 +48,7 @@ for scene_no, row in transcripts.iterrows():
 
     print(f'==> Requesting completion for scene {scene_no}')
     response = openai.ChatCompletion.create(
-        model="gpt-4",
+        model='gpt-4',
         messages=system_context + list(context),
         temperature=0.4,
         top_p=1,
@@ -58,7 +59,7 @@ for scene_no, row in transcripts.iterrows():
     answer = response['choices'][0]['message']
     context.append(answer)
 
-    json.dump(list(context), open(output_prefix + '-context.json', 'w'),
+    json.dump(list(context), open(context_file, 'w'),
               indent=2, ensure_ascii=False)
     open(output_prefix + '-answer.md', 'w').write(answer['content'])
 
